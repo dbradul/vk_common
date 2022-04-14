@@ -70,6 +70,26 @@ def read_from_csv(filename, config, column='id'):
         yield len(lines), users_chunk
 
 
+def login_enforcer(num_calls_threshold=42):
+    def deco(func):
+        @functools.wraps(func)
+        def inner(client: VkClientProxy, *args, **kwargs):
+            # try:
+                if client.num_calls == num_calls_threshold:
+                    logger.info(f"Num call threshold is exceeded ({num_calls_threshold})!")
+                    new_login, _ = client.next_account()
+                    logger.info(f"Switching to another account: {client._session.login} -> {new_login}.")
+                    client.auth(username=new_login)
+                    client.num_calls = 0
+
+                result = func(client, *args, **kwargs)
+                client.num_calls += 1
+                return result
+
+        return inner
+    return deco
+
+
 def repack_exc(func):
     @functools.wraps(func)
     def inner(client, *args, **kwargs):

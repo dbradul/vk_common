@@ -41,6 +41,7 @@ class VkClientProxy:
         self._accounts = []
         # self.config: Config = config
         self.config: Config = Config(**(config_data or {}))
+        self.num_calls = 0
 
     def __getattr__(self, item):
         return getattr(self._obj, item)
