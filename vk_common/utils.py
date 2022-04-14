@@ -57,27 +57,25 @@ def unwind_value(d, prefix=''):
 def read_from_csv(filename, config, column='id'):
     with open(filename, 'r', encoding='utf-8-sig') as f:
         reader = csv.DictReader(f, quotechar='"', delimiter=',')
-        users = [line for line in reader]
+        lines = [line for line in reader]
     if config.resume_from:
-        resumed_users = itertools.dropwhile(
-            lambda x: x[column] != config.resume_from, users
+        resumed_lines = itertools.dropwhile(
+            lambda x: x[column] != config.resume_from, lines
         )
-        next(resumed_users)
-        users = list(resumed_users)
+        next(resumed_lines)
+        lines = list(resumed_lines)
     chunk_size = config.search_count
-    for x in range(0, len(users), chunk_size):
-        users_chunk = users[x: x + chunk_size]
-        yield len(users), users_chunk
+    for x in range(0, len(lines), chunk_size):
+        users_chunk = lines[x: x + chunk_size]
+        yield len(lines), users_chunk
 
 
 def repack_exc(func):
     @functools.wraps(func)
     def inner(client, *args, **kwargs):
         try:
-            if inspect.isgeneratorfunction(func):
-                yield from func(client, *args, **kwargs)
-            else:
-                return func(client, *args, **kwargs)
+            result = func(client, *args, **kwargs)
+            return result
 
         except ApiError as ex:
             if ex.code == ERROR_RATE_LIMIT_EXCEEDED:
@@ -95,10 +93,48 @@ def login_retrier(func):
     @functools.wraps(func)
     def inner(client: VkClientProxy, *args, **kwargs):
         try:
-            if inspect.isgeneratorfunction(func):
-                yield from func(client, *args, **kwargs)
+            result = func(client, *args, **kwargs)
+            return result
+
+        except (RateLimitException, PermissionIsDeniedException) as ex:
+            logger.error(f'Retrying after error: {ex}')
+            for account, _ in client._accounts:
+                try:
+                    client.auth()
+                    result = func(client, *args, **kwargs)
+                    return result
+                except RateLimitException as ex:
+                    logger.error(f'Failed with account {account}. Retrying after error: {ex}')
             else:
-                return func(client, *args, **kwargs)
+                raise RateLimitException(str(ex))
+    return inner
+
+
+def repack_exc_gen(func):
+    @functools.wraps(func)
+    def inner(client, *args, **kwargs):
+        try:
+            result = func(client, *args, **kwargs)
+            yield from result
+
+        except ApiError as ex:
+            if ex.code == ERROR_RATE_LIMIT_EXCEEDED:
+                raise RateLimitException(str(ex))
+            elif ex.code == ERROR_PROFILE_IS_PRIVATE:
+                raise ProfileIsPrivateException(str(ex))
+            elif ex.code == ERROR_PERMISSION_IS_DENIED:
+                raise PermissionIsDeniedException(str(ex))
+            else:
+                raise
+    return inner
+
+
+def login_retrier_gen(func):
+    @functools.wraps(func)
+    def inner(client: VkClientProxy, *args, **kwargs):
+        try:
+            result = func(client, *args, **kwargs)
+            yield from result
 
         except (RateLimitException, PermissionIsDeniedException) as ex:
             logger.error(f'Retrying after error: {ex}')

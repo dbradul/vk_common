@@ -73,20 +73,28 @@ class VkClientProxy:
         if self._accounts:
             result = self._accounts.pop(0)
             self._accounts.append(result)
-
         return result
 
-    def auth(self):
+    def auth(self, username=None):
         try:
-            self._session = vk_api.VkApi(*self.next_account())
+            if username:
+                username, password = [(acc, passw) for acc, passw in self._accounts if acc == username][0]
+            else:
+                username, password = self.next_account()
+            self._session = vk_api.VkApi(username, password)
             self._session.auth()
             self.set_proxy_obj(self._session.get_api())
             # self.config = Config(**self.config.data)
         except Exception as ex:
-            self.direct_auth(app_id=os.getenv('VK_APP_ID'), client_secret=os.getenv('VK_APP_SECRET'))
+            self.direct_auth(
+                username=username,
+                password=password,
+                app_id=os.getenv('VK_APP_ID'),
+                client_secret=os.getenv('VK_APP_SECRET')
+            )
 
-    def direct_auth(self, **kw_args):
-        username, password = self.next_account()
+    def direct_auth(self, username, password, **kw_args):
+        # username, password = self.next_account()
         app_id, client_secret = kw_args.get('app_id'), kw_args.get('client_secret')
         self._session = vk_api.VkApi(*self.next_account(), **kw_args)
         AUTH_URL = f'https://oauth.vk.com/token?grant_type=password&client_id={app_id}&client_secret={client_secret}&'
