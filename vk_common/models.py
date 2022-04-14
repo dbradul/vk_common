@@ -14,11 +14,11 @@ class Mapping(BaseModel):
 
 
 class Config(BaseModel):
-    search_criteria: dict
+    search_criteria: Optional[dict] = {}
     search_count: Optional[int] = 100
     parse_posts: Optional[bool] = False
-    fetch_fields: List[str]
-    csv_fields: List[str]
+    fetch_fields: Optional[List[str]] = []
+    csv_fields: Optional[List[str]] = []
     resume_from: Optional[str] = ''
     custom_csv_fields: Optional[List[str]] = []
 
