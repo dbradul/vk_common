@@ -5,7 +5,7 @@ import vk_api
 from pydantic import BaseModel
 from typing import List, Optional, Any, Union
 
-import config
+# import config
 
 
 class Mapping(BaseModel):
@@ -35,11 +35,12 @@ class VkClientProxy:
     PROFILE_PHONE_NUMBER_PREFIX = 'USER_PHONE_NUMBER'
     PROFILE_PASSWORD_PREFIX = 'USER_PASSWORD'
 
-    def __init__(self):
+    def __init__(self, config_data=None):
         self._obj = None
         self._session = None
         self._accounts = []
-        self.config: Config = None
+        # self.config: Config = config
+        self.config: Config = Config(**(config_data or {}))
 
     def __getattr__(self, item):
         return getattr(self._obj, item)
@@ -52,7 +53,7 @@ class VkClientProxy:
             self._obj = instance
 
     def load_accounts(self):
-        from utils import logger
+        from .utils import logger
         accounts = []
         for k, v in os.environ.items():
             if k.startswith(self.PROFILE_PHONE_NUMBER_PREFIX):
@@ -80,7 +81,7 @@ class VkClientProxy:
             self._session = vk_api.VkApi(*self.next_account())
             self._session.auth()
             self.set_proxy_obj(self._session.get_api())
-            self.config = Config(**config.data)
+            # self.config = Config(**self.config.data)
         except Exception as ex:
             self.direct_auth(app_id=os.getenv('VK_APP_ID'), client_secret=os.getenv('VK_APP_SECRET'))
 
@@ -95,7 +96,7 @@ class VkClientProxy:
         self._session.token = resp.json()
         # self._session.auth(reauth=True, token_only=True)
         self.set_proxy_obj(self._session.get_api())
-        self.config = Config(**config.data)
+        # self.config = Config(**self.config.data)
 
     def get_params(self, extra_params=None):
         params = {'count': self.config.search_count}

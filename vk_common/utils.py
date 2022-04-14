@@ -6,7 +6,7 @@ from datetime import datetime
 
 from vk_api import ApiError
 
-from models import VkClientProxy
+from .models import VkClientProxy
 
 log_file = "./logfile.log"
 log_level = logging.INFO
@@ -79,6 +79,8 @@ def repack_exc(func):
                 raise RateLimitException(str(ex))
             elif ex.code == ERROR_PROFILE_IS_PRIVATE:
                 raise ProfileIsPrivateException(str(ex))
+            elif ex.code == ERROR_PERMISSION_IS_DENIED:
+                raise PermissionIsDeniedException(str(ex))
             else:
                 raise
     return inner

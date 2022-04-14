@@ -12,7 +12,7 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/dbradul/vk_common",
-    install_requires=["vk-api", "pydantic", "python-dotenv"],
+    install_requires=["vk-api", "requests", "pydantic", "python-dotenv"],
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
