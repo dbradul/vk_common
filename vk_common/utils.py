@@ -1,5 +1,7 @@
 import csv
 import functools
+import inspect
+
 import itertools
 import logging
 from datetime import datetime
@@ -72,7 +74,10 @@ def repack_exc(func):
     @functools.wraps(func)
     def inner(client, *args, **kwargs):
         try:
-            yield from func(client, *args, **kwargs)
+            if inspect.isgeneratorfunction(func):
+                yield from func(client, *args, **kwargs)
+            else:
+                return func(client, *args, **kwargs)
 
         except ApiError as ex:
             if ex.code == ERROR_RATE_LIMIT_EXCEEDED:
@@ -90,8 +95,10 @@ def login_retrier(func):
     @functools.wraps(func)
     def inner(client: VkClientProxy, *args, **kwargs):
         try:
-            result = func(client, *args, **kwargs)
-            yield from result
+            if inspect.isgeneratorfunction(func):
+                yield from func(client, *args, **kwargs)
+            else:
+                return func(client, *args, **kwargs)
 
         except (RateLimitException, PermissionIsDeniedException) as ex:
             logger.error(f'Retrying after error: {ex}')
