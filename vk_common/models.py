@@ -5,8 +5,6 @@ import vk_api
 from pydantic import BaseModel
 from typing import List, Optional, Any, Union
 
-# import config
-
 
 class Mapping(BaseModel):
     city: dict
@@ -95,13 +93,17 @@ class VkClientProxy:
             )
 
     def direct_auth(self, username, password, **kw_args):
+        from .utils import logger
         # username, password = self.next_account()
         app_id, client_secret = kw_args.get('app_id'), kw_args.get('client_secret')
         self._session = vk_api.VkApi(*self.next_account(), **kw_args)
         AUTH_URL = f'https://oauth.vk.com/token?grant_type=password&client_id={app_id}&client_secret={client_secret}&'
         resp = requests.get(AUTH_URL + f'username={username}&password={password}')
         if resp.status_code != 200:
-            raise RuntimeError(f'Not Authorized {resp.status_code}, {resp.text}')
+            logger.info(f'Couldn\'t authenticate as {username}!')
+            raise RuntimeError(f'Not authenticated {resp.status_code}, {resp.text}')
+        else:
+            logger.info(f'Successfully authenticated as {username}!')
         self._session.token = resp.json()
         # self._session.auth(reauth=True, token_only=True)
         self.set_proxy_obj(self._session.get_api())
