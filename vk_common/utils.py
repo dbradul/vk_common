@@ -109,27 +109,6 @@ def repack_exc(func):
     return inner
 
 
-def login_retrier(func):
-    @functools.wraps(func)
-    def inner(client: VkClientProxy, *args, **kwargs):
-        try:
-            result = func(client, *args, **kwargs)
-            return result
-
-        except (RateLimitException, PermissionIsDeniedException) as ex:
-            logger.error(f'Retrying after error: {ex}')
-            for account, _ in client._accounts:
-                try:
-                    client.auth()
-                    result = func(client, *args, **kwargs)
-                    return result
-                except RateLimitException as ex:
-                    logger.error(f'Failed with account {account}. Retrying after error: {ex}')
-            else:
-                raise RateLimitException(str(ex))
-    return inner
-
-
 def repack_exc_gen(func):
     @functools.wraps(func)
     def inner(client, *args, **kwargs):
@@ -149,6 +128,29 @@ def repack_exc_gen(func):
     return inner
 
 
+def login_retrier(func):
+    @functools.wraps(func)
+    def inner(client: VkClientProxy, *args, **kwargs):
+        try:
+            result = func(client, *args, **kwargs)
+            return result
+
+        except (RateLimitException, PermissionIsDeniedException) as ex:
+            logger.error(f'Retrying after error: {ex}')
+            for i in range(len(client._accounts)):
+                try:
+                    username, _ = client.next_account()
+                    logger.info(f"Switching to another account: {client._session.login} -> {username}.")
+                    client.auth(username)
+                    result = func(client, *args, **kwargs)
+                    return result
+                except (RateLimitException, PermissionIsDeniedException) as ex:
+                    logger.error(f'Failed with account {username}. Retrying after error: {ex}')
+            else:
+                raise
+    return inner
+
+
 def login_retrier_gen(func):
     @functools.wraps(func)
     def inner(client: VkClientProxy, *args, **kwargs):
@@ -158,14 +160,16 @@ def login_retrier_gen(func):
 
         except (RateLimitException, PermissionIsDeniedException) as ex:
             logger.error(f'Retrying after error: {ex}')
-            for account, _ in client._accounts:
+            for i in range(len(client._accounts)):
                 try:
-                    client.auth()
+                    username, _ = client.next_account()
+                    logger.info(f"Switching to another account: {client._session.login} -> {username}.")
+                    client.auth(username)
                     result = func(client, *args, **kwargs)
                     yield from result
                     break
-                except RateLimitException as ex:
-                    logger.error(f'Failed with account {account}. Retrying after error: {ex}')
+                except (RateLimitException, PermissionIsDeniedException) as ex:
+                    logger.error(f'Failed with account {username}. Retrying after error: {ex}')
             else:
-                raise RateLimitException(str(ex))
+                raise
     return inner

@@ -1,7 +1,8 @@
 import random
 
 from vk_common.models import VkClientProxy
-from vk_common.utils import login_retrier, repack_exc, login_retrier_gen, repack_exc_gen, login_enforcer
+from vk_common.utils import login_retrier, repack_exc, login_retrier_gen, repack_exc_gen, login_enforcer, \
+    PermissionIsDeniedException
 
 
 @login_retrier
@@ -25,6 +26,19 @@ def get_group_members_by_id(client, group_id):
 
     for member in members.get('items'):
         yield member
+
+
+@login_retrier_gen
+@repack_exc_gen
+def get_group_members_by_id_raise(client, group_id):
+    members = client.groups.getMembers(
+        group_id=group_id
+    )
+
+    for idx, member in enumerate(members.get('items')):
+        yield member
+        if idx == 42:
+            raise PermissionIsDeniedException('Test Exception')
 
 
 @login_enforcer(num_calls_threshold=10)
@@ -61,3 +75,12 @@ def test_login_enforcer():
         print(i, res)
 
     assert prev_account != vk_client._session.login
+
+
+def test_login_retrier():
+    vk_client = VkClientProxy()
+    vk_client.load_accounts()
+    vk_client.auth()
+
+    members = list(get_group_members_by_id_raise(vk_client, group_id='20799970'))
+    assert len(members) > 0
