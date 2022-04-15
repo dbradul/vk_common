@@ -12,7 +12,15 @@ def test_auth():
 def test_auth_as():
     vk_client = VkClientProxy()
     vk_client.load_accounts()
-    vk_client.auth(username='79648355961')
+    vk_client.auth(username='+380679372129')
+
+
+def test_auth_the_same_account():
+    vk_client = VkClientProxy()
+    vk_client.load_accounts()
+    vk_client.auth(username='+380679372129')
+
+    assert vk_client._session.login == '+380679372129'
 
 
 def test_direct_auth():

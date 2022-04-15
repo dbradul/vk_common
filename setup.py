@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="vk_common",
-    version="0.0.4",
+    version="0.0.5",
     author="Bradul Dmitriy",
     author_email="dbradul@gmail.com",
     description="VK Common tools for VK-API lib",

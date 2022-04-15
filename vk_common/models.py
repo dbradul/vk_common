@@ -98,7 +98,7 @@ class VkClientProxy:
         from .utils import logger
         # username, password = self.next_account()
         app_id, client_secret = kw_args.get('app_id'), kw_args.get('client_secret')
-        self._session = vk_api.VkApi(*self.next_account(), **kw_args)
+        self._session = vk_api.VkApi(username, password, **kw_args)
         AUTH_URL = f'https://oauth.vk.com/token?grant_type=password&client_id={app_id}&client_secret={client_secret}&'
         resp = requests.get(AUTH_URL + f'username={username}&password={password}')
         if resp.status_code != 200:

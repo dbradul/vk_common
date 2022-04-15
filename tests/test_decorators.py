@@ -1,4 +1,3 @@
-import os
 import random
 
 from vk_common.models import VkClientProxy
@@ -38,12 +37,6 @@ def send_message_by_user_id(client, message, user_id):
     return res_send
 
 
-def test_auth():
-    vk_client = VkClientProxy()
-    vk_client.load_accounts()
-    vk_client.auth()
-
-
 def test_decorated_func():
     vk_client = VkClientProxy()
     vk_client.load_accounts()
@@ -61,6 +54,10 @@ def test_login_enforcer():
     vk_client.load_accounts()
     vk_client.auth()
 
+    prev_account = vk_client._session.login
+
     for i in range(15):
         res = send_message_by_user_id(vk_client, 'test', 708328483)
         print(i, res)
+
+    assert prev_account != vk_client._session.login
