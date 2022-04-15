@@ -75,6 +75,7 @@ class VkClientProxy:
         return result
 
     def auth(self, username=None):
+        from .utils import logger
         try:
             if username:
                 username, password = [(acc, passw) for acc, passw in self._accounts if acc == username][0]
@@ -83,6 +84,7 @@ class VkClientProxy:
             self._session = vk_api.VkApi(username, password)
             self._session.auth()
             self.set_proxy_obj(self._session.get_api())
+            logger.info(f'Successfully authenticated as {username}!')
             # self.config = Config(**self.config.data)
         except Exception as ex:
             self.direct_auth(
