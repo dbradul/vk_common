@@ -3,20 +3,21 @@ import functools
 import inspect
 
 import itertools
-import logging
+# import logging
 from datetime import datetime
 
 from vk_api import ApiError
 
+from .log import logger
 from .models import VkClientProxy
 
-log_file = "./logfile.log"
-log_level = logging.INFO
-logging.basicConfig(
-    level=log_level, filename=log_file, filemode="a+", format="%(asctime)-15s %(levelname)-8s %(message)s"
-)
-logger = logging.getLogger("date_parser")
-logger.addHandler(logging.StreamHandler())
+# log_file = "./logfile.log"
+# log_level = logging.INFO
+# logging.basicConfig(
+#     level=log_level, filename=log_file, filemode="a+", format="%(asctime)-15s %(levelname)-8s %(message)s"
+# )
+# logger = logging.getLogger("date_parser")
+# logger.addHandler(logging.StreamHandler())
 
 ERROR_RATE_LIMIT_EXCEEDED = 29
 ERROR_PROFILE_IS_PRIVATE = 30

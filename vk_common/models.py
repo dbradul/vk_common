@@ -5,6 +5,8 @@ import vk_api
 from pydantic import BaseModel
 from typing import List, Optional, Any, Union
 
+from vk_common.log import logger
+
 
 class Mapping(BaseModel):
     city: dict
@@ -33,16 +35,50 @@ class VkClientProxy:
     PROFILE_PHONE_NUMBER_PREFIX = 'USER_PHONE_NUMBER'
     PROFILE_PASSWORD_PREFIX = 'USER_PASSWORD'
 
-    def __init__(self, config_data=None):
+    def __init__(self, config_data=None, num_calls_threshold=0, call_domain='', num_accounts_threshold=0):
         self._obj = None
         self._session = None
         self._accounts = []
         # self.config: Config = config
         self.config: Config = Config(**(config_data or {}))
         self.num_calls = 0
+        self.call_domain = call_domain
+        self.num_calls_threshold = num_calls_threshold
+        self.num_accounts = 0
+        self.num_accounts_threshold = num_accounts_threshold
 
     def __getattr__(self, item):
-        return getattr(self._obj, item)
+        if self.num_calls_threshold > 0:
+            self._change_account()
+
+        result = getattr(self._obj, item)
+        if self.call_domain == item:
+            self.num_calls += 1
+        return result
+
+    def _change_account(self):
+        if self.num_calls == self.num_calls_threshold:
+            logger.info(f"Num call threshold is exceeded ({self.num_calls_threshold})!")
+            new_login, _ = self.next_account()
+            logger.info(f"Switching to another account: {self._session.login} -> {new_login}.")
+            self.auth(username=new_login)
+            self.num_calls = 0
+            self.num_accounts += 1
+
+            if self.num_accounts_threshold > 0:
+                self._change_vpn()
+
+    def _change_vpn(self):
+        """So far VPN change is not automated, so we just ASK a user to do it manually"""
+        if (self.num_accounts) == self.num_accounts_threshold:
+            logger.info(f"Num accounts threshold is exceeded ({self.num_accounts_threshold})!")
+            logger.info("Please, change VPN region and press ENTER to continue...")
+
+            print('\n---------------------------------------------------------')
+            print(f"Num accounts threshold is exceeded ({self.num_accounts_threshold})!")
+            input("Please, change VPN region and press ENTER to continue...")
+
+            self.num_accounts = 0
 
     def set_proxy_obj(self, instance):
         if isinstance(instance, dict):
@@ -52,7 +88,6 @@ class VkClientProxy:
             self._obj = instance
 
     def load_accounts(self):
-        from .utils import logger
         accounts = []
         for k, v in os.environ.items():
             if k.startswith(self.PROFILE_PHONE_NUMBER_PREFIX):
@@ -75,7 +110,6 @@ class VkClientProxy:
         return result
 
     def auth(self, username=None):
-        from .utils import logger
         try:
             if username:
                 username, password = [(acc, passw) for acc, passw in self._accounts if acc == username][0]
@@ -95,7 +129,6 @@ class VkClientProxy:
             )
 
     def direct_auth(self, username, password, **kw_args):
-        from .utils import logger
         # username, password = self.next_account()
         app_id, client_secret = kw_args.get('app_id'), kw_args.get('client_secret')
         self._session = vk_api.VkApi(username, password, **kw_args)
@@ -107,9 +140,7 @@ class VkClientProxy:
         else:
             logger.info(f'Successfully authenticated as {username}!')
         self._session.token = resp.json()
-        # self._session.auth(reauth=True, token_only=True)
         self.set_proxy_obj(self._session.get_api())
-        # self.config = Config(**self.config.data)
 
     def get_params(self, extra_params=None):
         params = {'count': self.config.search_count}
