@@ -135,12 +135,13 @@ class VkClientProxy:
         # logger.error(f'Retrying after error: {ex}')
         for i in range(len(self._accounts)):
             try:
-                logger.info(f"Switching to another account: {self._session.login} -> {username}.")
+                # logger.info(f"Switching to another account: {self._session.login} -> {username}.")
                 self.auth(username)
                 break
             except Exception as ex:
                 logger.error(f'Failed with account {username}. Retrying after error: {ex}')
                 username, _ = self.next_account()
+                logger.info(f"Switching to another account: {self._session.login} -> {username}.")
 
     def direct_auth(self, username, password, **kw_args):
         # username, password = self.next_account()
