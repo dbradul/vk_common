@@ -5,14 +5,14 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="vk_common",
-    version="0.0.8",
+    version="0.0.9",
     author="Bradul Dmitriy",
     author_email="dbradul@gmail.com",
     description="VK Common tools for VK-API lib",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/dbradul/vk_common",
-    install_requires=["vk-api", "requests", "pydantic", "python-dotenv"],
+    install_requires=["vk-api", "requests", "pydantic", "python-dotenv", "console"],
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
