@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from typing import List, Optional, Any, Union
 
 from vk_common.log import logger
-from console.utils import wait_key
+
 
 class Mapping(BaseModel):
     city: dict
@@ -61,7 +61,8 @@ class VkClientProxy:
             logger.info(f"Num call threshold is exceeded ({self.num_calls_threshold})!")
             new_login, _ = self.next_account()
             logger.info(f"Switching to another account: {self._session.login} -> {new_login}.")
-            self.auth(username=new_login)
+            # self.auth(username=new_login)
+            self.auth_until_success(username=new_login)
             self.num_calls = 0
             self.num_accounts += 1
 
@@ -129,6 +130,17 @@ class VkClientProxy:
                 app_id=os.getenv('VK_APP_ID'),
                 client_secret=os.getenv('VK_APP_SECRET')
             )
+
+    def auth_until_success(self, username):
+        # logger.error(f'Retrying after error: {ex}')
+        for i in range(len(self._accounts)):
+            try:
+                logger.info(f"Switching to another account: {self._session.login} -> {username}.")
+                self.auth(username)
+                break
+            except Exception as ex:
+                logger.error(f'Failed with account {username}. Retrying after error: {ex}')
+                username, _ = self.next_account()
 
     def direct_auth(self, username, password, **kw_args):
         # username, password = self.next_account()
