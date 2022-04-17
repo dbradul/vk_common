@@ -71,4 +71,4 @@ def test_accounts_exceeded():
 
     # assert prev_account != vk_client._session.login
     assert vk_client.num_accounts == 2
-    # assert vk_client.num_calls == 2
+    assert vk_client.num_calls == 1

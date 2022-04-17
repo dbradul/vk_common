@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from typing import List, Optional, Any, Union
 
 from vk_common.log import logger
-
+from console.utils import wait_key
 
 class Mapping(BaseModel):
     city: dict
@@ -76,8 +76,11 @@ class VkClientProxy:
 
             print('\n---------------------------------------------------------')
             print(f"Num accounts threshold is exceeded ({self.num_accounts_threshold})!")
-            input("Please, change VPN region and press ENTER to continue...")
-
+            input("Please, change VPN region and press ANY key to continue...")
+            wait_key()
+            import os
+            os.system('read -s -n 1 -p "Press any key to continue..."')
+            print()
             self.num_accounts = 0
 
     def set_proxy_obj(self, instance):

@@ -9,6 +9,7 @@ pydantic = "*"
 python-dotenv = "*"
 setuptools = "*"
 wheel = "*"
+console = "*"
 
 [dev-packages]
 pytest = "*"
