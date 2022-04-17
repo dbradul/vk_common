@@ -57,7 +57,7 @@ class VkClientProxy:
         return result
 
     def _change_account(self):
-        if (self.num_calls - 1) == self.num_calls_threshold:
+        if (self.num_calls) == self.num_calls_threshold:
             logger.info(f"Num call threshold is exceeded ({self.num_calls_threshold})!")
             new_login, _ = self.next_account()
             logger.info(f"Switching to another account: {self._session.login} -> {new_login}.")
@@ -77,10 +77,10 @@ class VkClientProxy:
             print('\n---------------------------------------------------------')
             print(f"Num accounts threshold is exceeded ({self.num_accounts_threshold})!")
             input("Please, change VPN region and press ANY key to continue...")
-            wait_key()
-            import os
-            os.system('read -s -n 1 -p "Press any key to continue..."')
-            print()
+            # wait_key()
+            # import os
+            # os.system('read -s -n 1 -p "Press any key to continue..."')
+            # print()
             self.num_accounts = 0
 
     def set_proxy_obj(self, instance):
