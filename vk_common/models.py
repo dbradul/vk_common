@@ -75,7 +75,7 @@ class VkClientProxy:
             logger.info("\n------------------------------------------------------")
             logger.info(f"Num accounts threshold is exceeded ({self.num_accounts_threshold})!")
             logger.info("Please, change VPN region and press ENTER to continue...")
-            input("Please, change VPN region and press ENTER to continue...")
+            input(">>> ")
             logger.info("Resuming...")
             # wait_key()
             # import os
