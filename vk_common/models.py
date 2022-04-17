@@ -57,7 +57,7 @@ class VkClientProxy:
         return result
 
     def _change_account(self):
-        if self.num_calls == self.num_calls_threshold:
+        if (self.num_calls - 1) == self.num_calls_threshold:
             logger.info(f"Num call threshold is exceeded ({self.num_calls_threshold})!")
             new_login, _ = self.next_account()
             logger.info(f"Switching to another account: {self._session.login} -> {new_login}.")
