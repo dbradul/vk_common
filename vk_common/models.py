@@ -71,12 +71,11 @@ class VkClientProxy:
     def _change_vpn(self):
         """So far VPN change is not automated, so we just ASK a user to do it manually"""
         if (self.num_accounts) == self.num_accounts_threshold:
+            logger.info("\n------------------------------------------------------")
             logger.info(f"Num accounts threshold is exceeded ({self.num_accounts_threshold})!")
             logger.info("Please, change VPN region and press ENTER to continue...")
-
-            print('\n---------------------------------------------------------')
-            print(f"Num accounts threshold is exceeded ({self.num_accounts_threshold})!")
-            input("Please, change VPN region and press ANY key to continue...")
+            input("Please, change VPN region and press ENTER to continue...")
+            logger.info("Resuming...")
             # wait_key()
             # import os
             # os.system('read -s -n 1 -p "Press any key to continue..."')
