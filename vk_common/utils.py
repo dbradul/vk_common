@@ -19,18 +19,31 @@ from .models import VkClientProxy
 # logger = logging.getLogger("date_parser")
 # logger.addHandler(logging.StreamHandler())
 
-ERROR_RATE_LIMIT_EXCEEDED = 29
-ERROR_PROFILE_IS_PRIVATE = 30
-ERROR_PERMISSION_IS_DENIED = 7
+# ERROR_RATE_LIMIT_EXCEEDED = 29
+# ERROR_PROFILE_IS_PRIVATE = 30
+# ERROR_PERMISSION_IS_DENIED = 7
 
-class RateLimitException(Exception):
-    pass
+class VKBaseException(Exception):
+    error_code = 0
 
-class ProfileIsPrivateException(Exception):
-    pass
+class RateLimitException(VKBaseException):
+    error_code = 29
 
-class PermissionIsDeniedException(Exception):
-    pass
+# class ProfileIsPrivateException(VKBaseException):
+#     error_code = 30
+
+class PermissionIsDeniedException(VKBaseException):
+    error_code = 7
+
+class UserIsBlockedException(VKBaseException):
+    error_code = 5
+
+RELOGIN_EXCEPTIONS_MAP = {ex.error_code: ex for ex in (
+    RateLimitException,
+    # ProfileIsPrivateException,
+    PermissionIsDeniedException,
+    UserIsBlockedException
+)}
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -99,12 +112,16 @@ def repack_exc(func):
             return result
 
         except ApiError as ex:
-            if ex.code == ERROR_RATE_LIMIT_EXCEEDED:
-                raise RateLimitException(str(ex))
-            elif ex.code == ERROR_PROFILE_IS_PRIVATE:
-                raise ProfileIsPrivateException(str(ex))
-            elif ex.code == ERROR_PERMISSION_IS_DENIED:
-                raise PermissionIsDeniedException(str(ex))
+            if ex.code in RELOGIN_EXCEPTIONS_MAP:
+                raise RELOGIN_EXCEPTIONS_MAP[ex.code](str(ex))
+            # if ex.code in RELOGIN_EXCEPTIONS_LIST:
+            #     raise RateLimitException(str(ex))
+            # if ex.code == ERROR_RATE_LIMIT_EXCEEDED:
+            #     raise RateLimitException(str(ex))
+            # elif ex.code == ERROR_PROFILE_IS_PRIVATE:
+            #     raise ProfileIsPrivateException(str(ex))
+            # elif ex.code == ERROR_PERMISSION_IS_DENIED:
+            #     raise PermissionIsDeniedException(str(ex))
             else:
                 raise
     return inner
@@ -118,12 +135,14 @@ def repack_exc_gen(func):
             yield from result
 
         except ApiError as ex:
-            if ex.code == ERROR_RATE_LIMIT_EXCEEDED:
-                raise RateLimitException(str(ex))
-            elif ex.code == ERROR_PROFILE_IS_PRIVATE:
-                raise ProfileIsPrivateException(str(ex))
-            elif ex.code == ERROR_PERMISSION_IS_DENIED:
-                raise PermissionIsDeniedException(str(ex))
+            if ex.code in RELOGIN_EXCEPTIONS_MAP:
+                raise RELOGIN_EXCEPTIONS_MAP[ex.code](str(ex))
+            # if ex.code == ERROR_RATE_LIMIT_EXCEEDED:
+            #     raise RateLimitException(str(ex))
+            # elif ex.code == ERROR_PROFILE_IS_PRIVATE:
+            #     raise ProfileIsPrivateException(str(ex))
+            # elif ex.code == ERROR_PERMISSION_IS_DENIED:
+            #     raise PermissionIsDeniedException(str(ex))
             else:
                 raise
     return inner
@@ -136,16 +155,17 @@ def login_retrier(func):
             result = func(client, *args, **kwargs)
             return result
 
-        except (RateLimitException, PermissionIsDeniedException) as ex:
+        except tuple(RELOGIN_EXCEPTIONS_MAP.values()) as ex:
             logger.error(f'Retrying after error: {ex}')
             for i in range(len(client._accounts)):
                 try:
                     username, _ = client.next_account()
                     logger.info(f"Switching to another account: {client._session.login} -> {username}.")
                     client.auth(username)
+                    client.num_calls = 0
                     result = func(client, *args, **kwargs)
                     return result
-                except (RateLimitException, PermissionIsDeniedException) as ex:
+                except tuple(RELOGIN_EXCEPTIONS_MAP.values()) as ex:
                     logger.error(f'Failed with account {username}. Retrying after error: {ex}')
             else:
                 raise
@@ -159,17 +179,18 @@ def login_retrier_gen(func):
             result = func(client, *args, **kwargs)
             yield from result
 
-        except (RateLimitException, PermissionIsDeniedException) as ex:
+        except tuple(RELOGIN_EXCEPTIONS_MAP.values()) as ex:
             logger.error(f'Retrying after error: {ex}')
             for i in range(len(client._accounts)):
                 try:
                     username, _ = client.next_account()
                     logger.info(f"Switching to another account: {client._session.login} -> {username}.")
                     client.auth(username)
+                    client.num_calls = 0
                     result = func(client, *args, **kwargs)
                     yield from result
                     break
-                except (RateLimitException, PermissionIsDeniedException) as ex:
+                except tuple(RELOGIN_EXCEPTIONS_MAP.values()) as ex:
                     logger.error(f'Failed with account {username}. Retrying after error: {ex}')
             else:
                 raise

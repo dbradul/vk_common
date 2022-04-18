@@ -123,7 +123,7 @@ class VkClientProxy:
             self.set_proxy_obj(self._session.get_api())
             logger.info(f'Successfully authenticated as {username}!')
             # self.config = Config(**self.config.data)
-        except Exception as ex:
+        except vk_api.AuthError as ex:
             self.direct_auth(
                 username=username,
                 password=password,
