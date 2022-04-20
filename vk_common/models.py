@@ -5,6 +5,8 @@ import vk_api
 from pydantic import BaseModel
 from typing import List, Optional, Any, Union
 
+from vk_api.vk_api import DEFAULT_USER_SCOPE
+
 from vk_common.log import logger
 from vk_common.vk_patches import _api_login
 
@@ -56,7 +58,7 @@ class VkClientProxy:
             self._change_account()
 
         result = getattr(self._obj, item)
-        if self.call_domain == item:
+        if item in self.call_domain:
             self.num_calls += 1
         return result
 
@@ -65,7 +67,6 @@ class VkClientProxy:
             logger.info(f"Num call threshold is exceeded ({self.num_calls_threshold})!")
             new_login, _ = self.next_account()
             logger.info(f"Switching to another account: {self._session.login} -> {new_login}.")
-            # self.auth(username=new_login)
             self.auth_until_success(username=new_login)
             self.num_calls = 0
             self.num_accounts += 1
@@ -81,10 +82,6 @@ class VkClientProxy:
             logger.info("Please, change VPN region and press ENTER to continue...")
             input(">>> ")
             logger.info("Resuming...")
-            # wait_key()
-            # import os
-            # os.system('read -s -n 1 -p "Press any key to continue..."')
-            # print()
             self.num_accounts = 0
 
     def set_proxy_obj(self, instance):
