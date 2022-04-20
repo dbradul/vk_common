@@ -58,7 +58,7 @@ def _test_decorated_func_gen():
     assert len(members) > 0
 
 
-def test_login_retrier():
+def _test_login_retrier():
     @login_retrier_gen
     @repack_exc_gen
     def get_group_members_by_id_raise(client: VkClientProxy, group_id):

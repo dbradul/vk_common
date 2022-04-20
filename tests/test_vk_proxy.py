@@ -3,13 +3,13 @@ import random
 
 from vk_common.models import VkClientProxy
 
-#
-# def test_auth():
-#     vk_client = VkClientProxy()
-#     vk_client.load_accounts()
-#     vk_client.auth()
-#
-#
+
+def test_auth():
+    vk_client = VkClientProxy()
+    vk_client.load_accounts()
+    vk_client.auth()
+
+
 # def test_auth_as():
 #     vk_client = VkClientProxy()
 #     vk_client.load_accounts()

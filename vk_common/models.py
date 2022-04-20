@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from typing import List, Optional, Any, Union
 
 from vk_common.log import logger
+from vk_common.vk_patches import _api_login
 
 
 class Mapping(BaseModel):
@@ -46,6 +47,9 @@ class VkClientProxy:
         self.num_calls_threshold = num_calls_threshold
         self.num_accounts = 0
         self.num_accounts_threshold = num_accounts_threshold
+
+        # patch lib with not merged (yet) PRs
+        vk_api.VkApi._api_login = _api_login
 
     def __getattr__(self, item):
         if self.num_calls_threshold > 0:
@@ -112,14 +116,14 @@ class VkClientProxy:
             self._accounts.append(result)
         return result
 
-    def auth(self, username=None):
+    def auth(self, username=None, reauth=False):
         try:
             if username:
                 username, password = [(acc, passw) for acc, passw in self._accounts if acc == username][0]
             else:
                 username, password = self.next_account()
             self._session = vk_api.VkApi(username, password)
-            self._session.auth()
+            self._session.auth(reauth=reauth)
             self.set_proxy_obj(self._session.get_api())
             logger.info(f'Successfully authenticated as {username}!')
             # self.config = Config(**self.config.data)
