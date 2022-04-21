@@ -1,27 +1,13 @@
 import csv
 import functools
-import inspect
-
-import itertools
-# import logging
 from datetime import datetime
 
+import itertools
 from vk_api import ApiError
 
 from .log import logger
 from .models import VkClientProxy
 
-# log_file = "./logfile.log"
-# log_level = logging.INFO
-# logging.basicConfig(
-#     level=log_level, filename=log_file, filemode="a+", format="%(asctime)-15s %(levelname)-8s %(message)s"
-# )
-# logger = logging.getLogger("date_parser")
-# logger.addHandler(logging.StreamHandler())
-
-# ERROR_RATE_LIMIT_EXCEEDED = 29
-# ERROR_PROFILE_IS_PRIVATE = 30
-# ERROR_PERMISSION_IS_DENIED = 7
 
 class VKBaseException(Exception):
     error_code = 0
@@ -84,26 +70,6 @@ def read_from_csv(filename, config, column='id'):
         yield len(lines), users_chunk
 
 
-def login_enforcer(num_calls_threshold=42):
-    def deco(func):
-        @functools.wraps(func)
-        def inner(client: VkClientProxy, *args, **kwargs):
-            # try:
-                if client.num_calls == num_calls_threshold:
-                    logger.info(f"Num call threshold is exceeded ({num_calls_threshold})!")
-                    new_login, _ = client.next_account()
-                    logger.info(f"Switching to another account: {client._session.login} -> {new_login}.")
-                    client.auth(username=new_login)
-                    client.num_calls = 0
-
-                result = func(client, *args, **kwargs)
-                client.num_calls += 1
-                return result
-
-        return inner
-    return deco
-
-
 def repack_exc(func):
     @functools.wraps(func)
     def inner(client, *args, **kwargs):
@@ -114,14 +80,6 @@ def repack_exc(func):
         except ApiError as ex:
             if ex.code in RELOGIN_EXCEPTIONS_MAP:
                 raise RELOGIN_EXCEPTIONS_MAP[ex.code](str(ex))
-            # if ex.code in RELOGIN_EXCEPTIONS_LIST:
-            #     raise RateLimitException(str(ex))
-            # if ex.code == ERROR_RATE_LIMIT_EXCEEDED:
-            #     raise RateLimitException(str(ex))
-            # elif ex.code == ERROR_PROFILE_IS_PRIVATE:
-            #     raise ProfileIsPrivateException(str(ex))
-            # elif ex.code == ERROR_PERMISSION_IS_DENIED:
-            #     raise PermissionIsDeniedException(str(ex))
             else:
                 raise
     return inner
@@ -137,12 +95,6 @@ def repack_exc_gen(func):
         except ApiError as ex:
             if ex.code in RELOGIN_EXCEPTIONS_MAP:
                 raise RELOGIN_EXCEPTIONS_MAP[ex.code](str(ex))
-            # if ex.code == ERROR_RATE_LIMIT_EXCEEDED:
-            #     raise RateLimitException(str(ex))
-            # elif ex.code == ERROR_PROFILE_IS_PRIVATE:
-            #     raise ProfileIsPrivateException(str(ex))
-            # elif ex.code == ERROR_PERMISSION_IS_DENIED:
-            #     raise PermissionIsDeniedException(str(ex))
             else:
                 raise
     return inner
@@ -161,7 +113,7 @@ def login_retrier(func):
                 try:
                     username, _ = client.next_account()
                     logger.info(f"Switching to another account: {client._session.login} -> {username}.")
-                    client.auth(username)
+                    client.auth_until_success(username)
                     client.num_calls = 0
                     result = func(client, *args, **kwargs)
                     return result
@@ -185,7 +137,7 @@ def login_retrier_gen(func):
                 try:
                     username, _ = client.next_account()
                     logger.info(f"Switching to another account: {client._session.login} -> {username}.")
-                    client.auth(username)
+                    client.auth_until_success(username)
                     client.num_calls = 0
                     result = func(client, *args, **kwargs)
                     yield from result

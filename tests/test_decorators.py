@@ -1,7 +1,7 @@
 import random
 
 from vk_common.models import VkClientProxy
-from vk_common.utils import login_retrier, repack_exc, login_retrier_gen, repack_exc_gen, login_enforcer, \
+from vk_common.utils import login_retrier, repack_exc, login_retrier_gen, repack_exc_gen, \
     PermissionIsDeniedException
 
 

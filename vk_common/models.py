@@ -132,11 +132,11 @@ class VkClientProxy:
                 client_secret=os.getenv('VK_APP_SECRET')
             )
 
-    def auth_until_success(self, username=None):
+    def auth_until_success(self, username=None, reauth=False):
         username, password = self.next_account(username)
         for _ in range(len(self._accounts)):
             try:
-                self.auth(username)
+                self.auth(username, reauth=reauth)
                 break
             except Exception as ex:
                 logger.error(f'Failed with account {username}. Retrying after error: {ex}')

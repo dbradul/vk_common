@@ -66,7 +66,7 @@ def test_accounts_exceeded():
     vk_client = VkClientProxy(num_calls_threshold=3, call_domain='messages', num_accounts_threshold=2)
     vk_client.load_accounts()
     # vk_client.auth(scope=(VkUserPermissions.MESSAGES + VkUserPermissions.WALL))
-    vk_client.auth(reauth=True)
+    vk_client.auth_until_success(reauth=True)
     # username, password = vk_client.next_account()
     # vk_client.direct_auth(
     #     username=username,
@@ -86,7 +86,7 @@ def test_accounts_exceeded():
             )
             print(i, res)
     except Exception as ex:
-        print(ex)
+        raise
     # assert prev_account != vk_client._session.login
     assert vk_client.num_accounts == 0
     assert vk_client.num_calls == 1
