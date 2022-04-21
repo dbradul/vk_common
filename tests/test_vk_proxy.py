@@ -56,6 +56,12 @@ from vk_common.models import VkClientProxy
 #     assert vk_client.num_accounts == 1
 
 
+def test_auth_until_success():
+    vk_client = VkClientProxy()
+    vk_client.load_accounts()
+    vk_client.auth_until_success()
+
+
 def test_accounts_exceeded():
     vk_client = VkClientProxy(num_calls_threshold=3, call_domain='messages', num_accounts_threshold=2)
     vk_client.load_accounts()

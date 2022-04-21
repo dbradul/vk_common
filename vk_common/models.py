@@ -106,24 +106,24 @@ class VkClientProxy:
 
         self._accounts = accounts
 
-    def next_account(self):
-        result = None, None
-        if self._accounts:
+    def next_account(self, username=None):
+        if not self._accounts:
+            raise RuntimeError(f'Accounts are not found!\n'
+                               f'Please, check env vars prefixed with {self.PROFILE_PHONE_NUMBER_PREFIX}')
+        if username:
+            result = [(acc, passw) for acc, passw in self._accounts if acc == username][0]
+        else:
             result = self._accounts.pop(0)
             self._accounts.append(result)
         return result
 
     def auth(self, username=None, reauth=False):
         try:
-            if username:
-                username, password = [(acc, passw) for acc, passw in self._accounts if acc == username][0]
-            else:
-                username, password = self.next_account()
+            username, password = self.next_account(username)
             self._session = vk_api.VkApi(username, password)
             self._session.auth(reauth=reauth)
             self.set_proxy_obj(self._session.get_api())
             logger.info(f'Successfully authenticated as {username}!')
-            # self.config = Config(**self.config.data)
         except vk_api.AuthError as ex:
             self.direct_auth(
                 username=username,
@@ -132,20 +132,20 @@ class VkClientProxy:
                 client_secret=os.getenv('VK_APP_SECRET')
             )
 
-    def auth_until_success(self, username):
-        # logger.error(f'Retrying after error: {ex}')
-        for i in range(len(self._accounts)):
+    def auth_until_success(self, username=None):
+        username, password = self.next_account(username)
+        for _ in range(len(self._accounts)):
             try:
-                # logger.info(f"Switching to another account: {self._session.login} -> {username}.")
                 self.auth(username)
                 break
             except Exception as ex:
                 logger.error(f'Failed with account {username}. Retrying after error: {ex}')
                 username, _ = self.next_account()
                 logger.info(f"Switching to another account: {self._session.login} -> {username}.")
+        else:
+            raise RuntimeError('Couldn\'t authenticate')
 
     def direct_auth(self, username, password, **kw_args):
-        # username, password = self.next_account()
         app_id, client_secret = kw_args.get('app_id'), kw_args.get('client_secret')
         self._session = vk_api.VkApi(username, password, **kw_args)
         AUTH_URL = f'https://oauth.vk.com/token?grant_type=password&client_id={app_id}&client_secret={client_secret}&'
