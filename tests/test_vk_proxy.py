@@ -5,6 +5,9 @@ from vk_api import VkUserPermissions
 
 from vk_common.models import VkClientProxy
 
+from dotenv import load_dotenv
+
+load_dotenv()
 #
 # def test_auth():
 #     vk_client = VkClientProxy()
@@ -60,9 +63,32 @@ def test_auth_until_success():
     vk_client = VkClientProxy()
     vk_client.load_accounts()
     vk_client.auth_until_success()
+    res = vk_client.groups.getMembers(
+        group_id=20799970
+    )
+    res = vk_client.messages.send(
+        user_id=708328483,
+        random_id=random.randint(100, 100000000),
+        message='test message'
+    )
+    print(vk_client)
+
+def test_direct_auth_until_success():
+    vk_client = VkClientProxy()
+    vk_client.load_accounts()
+    vk_client.direct_auth_until_success()
+    res = vk_client.groups.getMembers(
+        group_id=20799970
+    )
+    res = vk_client.messages.send(
+        user_id=708328483,
+        random_id=random.randint(100, 100000000),
+        message='test message'
+    )
+    print(vk_client)
 
 
-def test_accounts_exceeded():
+def _test_accounts_exceeded():
     vk_client = VkClientProxy(num_calls_threshold=3, call_domain='messages', num_accounts_threshold=2)
     vk_client.load_accounts()
     # vk_client.auth(scope=(VkUserPermissions.MESSAGES + VkUserPermissions.WALL))

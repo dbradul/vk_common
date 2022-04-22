@@ -145,6 +145,25 @@ class VkClientProxy:
         else:
             raise RuntimeError('Couldn\'t authenticate')
 
+
+    def direct_auth_until_success(self, username=None):
+        username, password = self.next_account(username)
+        for _ in range(len(self._accounts)):
+            try:
+                self.direct_auth(
+                    username=username,
+                    password=password,
+                    app_id=os.getenv('VK_APP_ID'),
+                    client_secret=os.getenv('VK_APP_SECRET')
+                )
+                break
+            except Exception as ex:
+                logger.error(f'Failed with account {username}. Retrying after error: {ex}')
+                username, _ = self.next_account()
+                logger.info(f"Switching to another account: {self._session.login} -> {username}.")
+        else:
+            raise RuntimeError('Couldn\'t direct authenticate')
+
     def direct_auth(self, username, password, **kw_args):
         app_id, client_secret = kw_args.get('app_id'), kw_args.get('client_secret')
         self._session = vk_api.VkApi(username, password, **kw_args)
