@@ -63,20 +63,21 @@ class VkClientProxy:
         return result
 
     def _change_account(self):
-        if (self.num_calls) == self.num_calls_threshold:
+        if self.num_calls == self.num_calls_threshold:
             logger.info(f"Num call threshold is exceeded ({self.num_calls_threshold})!")
-            new_login, _ = self.next_account()
-            logger.info(f"Switching to another account: {self._session.login} -> {new_login}.")
-            self.auth_until_success(username=new_login)
             self.num_calls = 0
             self.num_accounts += 1
 
             if self.num_accounts_threshold > 0:
                 self._change_vpn()
 
+            new_login, _ = self.next_account()
+            logger.info(f"Switching to another account: {self._session.login} -> {new_login}.")
+            self.auth_until_success(username=new_login)
+
     def _change_vpn(self):
         """So far VPN change is not automated, so we just ASK a user to do it manually"""
-        if (self.num_accounts) == self.num_accounts_threshold:
+        if self.num_accounts == self.num_accounts_threshold:
             logger.info("\n------------------------------------------------------")
             logger.info(f"Num accounts threshold is exceeded ({self.num_accounts_threshold})!")
             logger.info("Please, change VPN region and press ENTER to continue...")
