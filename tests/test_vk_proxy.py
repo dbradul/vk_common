@@ -59,7 +59,7 @@ load_dotenv()
 #     assert vk_client.num_accounts == 1
 
 
-def test_auth_until_success():
+def _test_auth_until_success():
     vk_client = VkClientProxy()
     vk_client.load_accounts()
     vk_client.auth_until_success()
@@ -73,7 +73,7 @@ def test_auth_until_success():
     )
     print(vk_client)
 
-def test_direct_auth_until_success():
+def _test_direct_auth_until_success():
     vk_client = VkClientProxy()
     vk_client.load_accounts()
     vk_client.direct_auth_until_success()
@@ -88,11 +88,11 @@ def test_direct_auth_until_success():
     print(vk_client)
 
 
-def _test_accounts_exceeded():
+def test_accounts_exceeded():
     vk_client = VkClientProxy(num_calls_threshold=3, call_domain='messages', num_accounts_threshold=2)
     vk_client.load_accounts()
     # vk_client.auth(scope=(VkUserPermissions.MESSAGES + VkUserPermissions.WALL))
-    vk_client.auth_until_success(reauth=True)
+    vk_client.auth_until_success()
     # username, password = vk_client.next_account()
     # vk_client.direct_auth(
     #     username=username,

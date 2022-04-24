@@ -1,3 +1,5 @@
+import functools
+
 import os
 import requests
 
@@ -5,7 +7,6 @@ import vk_api
 from pydantic import BaseModel
 from typing import List, Optional, Any, Union
 
-from vk_api.vk_api import DEFAULT_USER_SCOPE
 
 from vk_common.log import logger
 from vk_common.vk_patches import _api_login
@@ -38,7 +39,8 @@ class VkClientProxy:
     PROFILE_PHONE_NUMBER_PREFIX = 'USER_PHONE_NUMBER'
     PROFILE_PASSWORD_PREFIX = 'USER_PASSWORD'
 
-    def __init__(self, config_data=None, num_calls_threshold=0, call_domain='', num_accounts_threshold=0):
+    def __init__(self, config_data=None, num_calls_threshold=0, call_domain='', num_accounts_threshold=0,
+                 auth_func=None):
         self._obj = None
         self._session = None
         self._accounts = []
@@ -49,6 +51,7 @@ class VkClientProxy:
         self.num_calls_threshold = num_calls_threshold
         self.num_accounts = 0
         self.num_accounts_threshold = num_accounts_threshold
+        self._auth_func = auth_func or functools.partial(VkClientProxy.auth_until_success, self)
 
         # patch lib with not merged (yet) PRs
         vk_api.VkApi._api_login = _api_login
@@ -67,7 +70,8 @@ class VkClientProxy:
             logger.info(f"Num call threshold is exceeded ({self.num_calls_threshold})!")
             new_login, _ = self.next_account()
             logger.info(f"Switching to another account: {self._session.login} -> {new_login}.")
-            self.auth_until_success(username=new_login)
+            # self.auth_until_success(username=new_login)
+            self._auth_func(username=new_login)
             self.num_calls = 0
             self.num_accounts += 1
 
@@ -162,7 +166,7 @@ class VkClientProxy:
                 username, _ = self.next_account()
                 logger.info(f"Switching to another account: {self._session.login} -> {username}.")
         else:
-            raise RuntimeError('Couldn\'t direct authenticate')
+            raise RuntimeError('Couldn\'t directly authenticate')
 
     def direct_auth(self, username, password, **kw_args):
         app_id, client_secret = kw_args.get('app_id'), kw_args.get('client_secret')
