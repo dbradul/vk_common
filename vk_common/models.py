@@ -51,7 +51,7 @@ class VkClientProxy:
         self.num_calls_threshold = num_calls_threshold
         self.num_accounts = 0
         self.num_accounts_threshold = num_accounts_threshold
-        self._reauth_func = reauth_func or functools.partial(VkClientProxy.auth_until_success, self)
+        self._reauth_func = functools.partial((reauth_func or VkClientProxy.auth_until_success), self)
 
         # patch lib with not merged (yet) PRs
         vk_api.VkApi._api_login = _api_login
