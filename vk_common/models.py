@@ -76,7 +76,7 @@ class VkClientProxy:
 
             new_login, _ = self.next_account()
             logger.info(f"Switching to another account: {self._session.login} -> {new_login}.")
-            self.auth_until_success(username=new_login)
+            # self.auth_until_success(username=new_login)
             self._reauth_func(username=new_login)
 
     def _change_vpn(self):
