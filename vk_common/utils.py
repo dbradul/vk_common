@@ -113,7 +113,8 @@ def login_retrier(func):
                 try:
                     username, _ = client.next_account()
                     logger.info(f"Switching to another account: {client._session.login} -> {username}.")
-                    client.auth_until_success(username)
+                    # client.auth_until_success(username)
+                    client._reauth_func(username)
                     client.num_calls = 0
                     result = func(client, *args, **kwargs)
                     return result
@@ -137,7 +138,8 @@ def login_retrier_gen(func):
                 try:
                     username, _ = client.next_account()
                     logger.info(f"Switching to another account: {client._session.login} -> {username}.")
-                    client.auth_until_success(username)
+                    # client.auth_until_success(username)
+                    client._reauth_func(username)
                     client.num_calls = 0
                     result = func(client, *args, **kwargs)
                     yield from result
