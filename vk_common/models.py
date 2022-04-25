@@ -1,3 +1,4 @@
+import functools
 import os
 import requests
 
@@ -38,7 +39,8 @@ class VkClientProxy:
     PROFILE_PHONE_NUMBER_PREFIX = 'USER_PHONE_NUMBER'
     PROFILE_PASSWORD_PREFIX = 'USER_PASSWORD'
 
-    def __init__(self, config_data=None, num_calls_threshold=0, call_domain='', num_accounts_threshold=0):
+    def __init__(self, config_data=None, num_calls_threshold=0, call_domain='', num_accounts_threshold=0,
+                 reauth_func=None):
         self._obj = None
         self._session = None
         self._accounts = []
@@ -49,6 +51,7 @@ class VkClientProxy:
         self.num_calls_threshold = num_calls_threshold
         self.num_accounts = 0
         self.num_accounts_threshold = num_accounts_threshold
+        self._reauth_func = reauth_func or functools.partial(VkClientProxy.auth_until_success, self)
 
         # patch lib with not merged (yet) PRs
         vk_api.VkApi._api_login = _api_login
@@ -74,6 +77,7 @@ class VkClientProxy:
             new_login, _ = self.next_account()
             logger.info(f"Switching to another account: {self._session.login} -> {new_login}.")
             self.auth_until_success(username=new_login)
+            self._reauth_func(username=new_login)
 
     def _change_vpn(self):
         """So far VPN change is not automated, so we just ASK a user to do it manually"""
@@ -146,8 +150,7 @@ class VkClientProxy:
         else:
             raise RuntimeError('Couldn\'t authenticate')
 
-
-    def direct_auth_until_success(self, username=None):
+    def direct_auth_until_success(self, username=None, **kwargs):
         username, password = self.next_account(username)
         for _ in range(len(self._accounts)):
             try:
