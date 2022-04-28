@@ -163,7 +163,7 @@ class VkClientProxy:
                 break
             except Exception as ex:
                 logger.error(f'Failed with account {username}. Retrying after error: {ex}')
-                username, _ = self.next_account()
+                username, password = self.next_account()
                 logger.info(f"Switching to another account: {self._session.login} -> {username}.")
         else:
             raise RuntimeError('Couldn\'t direct authenticate')
