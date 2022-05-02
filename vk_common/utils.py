@@ -111,7 +111,7 @@ def login_retrier(func):
             logger.error(f'Retrying after error: {ex}')
             for i in range(len(client._accounts)):
                 try:
-                    username, _ = client.next_account()
+                    username, _ = client.switch_account()
                     logger.info(f"Switching to another account: {client._session.login} -> {username}.")
                     # client.auth_until_success(username)
                     client._reauth_func(username)
@@ -136,7 +136,7 @@ def login_retrier_gen(func):
             logger.error(f'Retrying after error: {ex}')
             for i in range(len(client._accounts)):
                 try:
-                    username, _ = client.next_account()
+                    username, _ = client.switch_account()
                     logger.info(f"Switching to another account: {client._session.login} -> {username}.")
                     # client.auth_until_success(username)
                     client._reauth_func(username)

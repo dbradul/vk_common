@@ -4,9 +4,7 @@ import requests
 
 import vk_api
 from pydantic import BaseModel
-from typing import List, Optional, Any, Union
-
-from vk_api.vk_api import DEFAULT_USER_SCOPE
+from typing import List, Optional, Union
 
 from vk_common.log import logger
 from vk_common.vk_patches import _api_login
@@ -68,13 +66,8 @@ class VkClientProxy:
     def _change_account(self):
         if self.num_calls == self.num_calls_threshold:
             logger.info(f"Num call threshold is exceeded ({self.num_calls_threshold})!")
-            self.num_calls = 0
-            self.num_accounts += 1
 
-            if self.num_accounts_threshold > 0:
-                self._change_vpn()
-
-            new_login, _ = self.next_account()
+            new_login, _ = self.switch_account()
             logger.info(f"Switching to another account: {self._session.login} -> {new_login}.")
             # self.auth_until_success(username=new_login)
             self._reauth_func(username=new_login)
@@ -122,6 +115,17 @@ class VkClientProxy:
             self._accounts.append(result)
         return result
 
+    def switch_account(self):
+        self.num_calls = 0
+        self.num_accounts += 1
+
+        if self.num_accounts_threshold > 0:
+            self._change_vpn()
+
+        result = self.next_account()
+
+        return result
+
     def auth(self, username=None, reauth=False):
         try:
             username, password = self.next_account(username)
@@ -145,7 +149,7 @@ class VkClientProxy:
                 break
             except Exception as ex:
                 logger.error(f'Failed with account {username}. Retrying after error: {ex}')
-                username, _ = self.next_account()
+                username, _ = self.switch_account()
                 logger.info(f"Switching to another account: {self._session.login} -> {username}.")
         else:
             raise RuntimeError('Couldn\'t authenticate')
@@ -163,7 +167,7 @@ class VkClientProxy:
                 break
             except Exception as ex:
                 logger.error(f'Failed with account {username}. Retrying after error: {ex}')
-                username, password = self.next_account()
+                username, password = self.switch_account()
                 logger.info(f"Switching to another account: {self._session.login} -> {username}.")
         else:
             raise RuntimeError('Couldn\'t direct authenticate')
