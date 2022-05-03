@@ -190,3 +190,9 @@ class VkClientProxy:
         if extra_params:
             params.update(extra_params)
         return params
+
+    def get_search_params(self, extra_params=None):
+        params = {k: v for k, v in self.config.search_criteria.items() if v}
+        if extra_params:
+            params.update(extra_params)
+        return params
