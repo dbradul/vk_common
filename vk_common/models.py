@@ -5,6 +5,7 @@ import requests
 import vk_api
 from pydantic import BaseModel
 from typing import List, Optional, Union
+from vk_api import VkTools
 
 from vk_common.log import logger
 from vk_common.vk_patches import _api_login
@@ -88,6 +89,11 @@ class VkClientProxy:
                 setattr(self, k, v)
         else:
             self._obj = instance
+
+    def get_iter(self, method, params):
+        tools = VkTools(self._obj)
+        it = tools.get_all_iter(method, max_count=self.config.search_count, values=params)
+        return it
 
     def load_accounts(self):
         accounts = []

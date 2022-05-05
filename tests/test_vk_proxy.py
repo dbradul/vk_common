@@ -121,3 +121,14 @@ def test_accounts_exceeded():
     # assert prev_account != vk_client._session.login
     assert vk_client.num_accounts == 0
     assert vk_client.num_calls == 1
+
+
+
+def test_iter_method():
+    vk_client = VkClientProxy()
+    vk_client.load_accounts()
+    vk_client.auth_until_success()
+
+    city_params = {'country_id': 1, 'need_all': 0}
+    for city in vk_client.get_iter('database.getCities', params=city_params):
+        assert (city)
