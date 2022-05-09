@@ -78,8 +78,8 @@ def repack_exc(func):
             return result
 
         except ApiError as ex:
-            if ex.code in RELOGIN_EXCEPTIONS_MAP:
-                raise RELOGIN_EXCEPTIONS_MAP[ex.code](str(ex))
+            if int(ex.code) in RELOGIN_EXCEPTIONS_MAP:
+                raise RELOGIN_EXCEPTIONS_MAP[int(ex.code)](str(ex))
             else:
                 raise
     return inner
@@ -93,8 +93,8 @@ def repack_exc_gen(func):
             yield from result
 
         except ApiError as ex:
-            if ex.code in RELOGIN_EXCEPTIONS_MAP:
-                raise RELOGIN_EXCEPTIONS_MAP[ex.code](str(ex))
+            if int(ex.code) in RELOGIN_EXCEPTIONS_MAP:
+                raise RELOGIN_EXCEPTIONS_MAP[int(ex.code)](str(ex))
             else:
                 raise
     return inner

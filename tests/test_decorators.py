@@ -1,4 +1,4 @@
-import random
+from vk_api import ApiError
 
 from vk_common.models import VkClientProxy
 from vk_common.utils import login_retrier, repack_exc, login_retrier_gen, repack_exc_gen, \
@@ -58,7 +58,7 @@ def _test_decorated_func_gen():
     assert len(members) > 0
 
 
-def _test_login_retrier():
+def test_login_retrier():
     @login_retrier_gen
     @repack_exc_gen
     def get_group_members_by_id_raise(client: VkClientProxy, group_id):
@@ -69,7 +69,9 @@ def _test_login_retrier():
         for idx, member in enumerate(members.get('items')):
             yield member
             if idx == 42:
-                raise PermissionIsDeniedException('Test Exception')
+                # raise PermissionIsDeniedException('Test Exception')
+                raise ApiError('vk', 'method', 'values', 'raw', {'error_code': 29,
+                                                                 'error_msg': 'X'})
 
 
     vk_client = VkClientProxy(call_domain='groups')
